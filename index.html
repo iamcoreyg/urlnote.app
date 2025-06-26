@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Notes</title>
+    <title>urlnote.app</title>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <style>
         * {
@@ -17,22 +17,22 @@
             background: white;
             color: #333;
             min-height: 100vh;
-            padding: 20px;
             line-height: 1.6;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            border: 1px solid #ddd;
         }
 
         .header {
-            background: black;
-            color: white;
+            color: #111;
             padding: 20px;
             text-align: center;
-            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
         }
 
         .header h1 {
@@ -53,9 +53,9 @@
         .controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -75,7 +75,7 @@
         }
 
         .btn.active {
-            background: black;
+            background: #111;
             color: white;
         }
 
@@ -113,9 +113,9 @@
         .note-area {
             width: 100%;
             min-height: 400px;
-            border: 1px solid #ddd;
+            border: 1px solid transparent;
             padding: 15px;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.6;
             background: white;
             outline: none;
@@ -123,7 +123,7 @@
         }
 
         .note-area:focus-within {
-            border-color: #333;
+            border-color: #ccc;
         }
 
         /* Tiptap Editor Styling */
@@ -235,8 +235,8 @@
         }
 
         .url-section {
-            margin-top: 20px;
-            padding-top: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
             border-top: 1px solid #eee;
         }
 
@@ -258,7 +258,7 @@
         }
 
         .copy-btn {
-            background: black;
+            background: #111;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -297,7 +297,7 @@
             margin-top: 20px;
             padding: 15px;
             background: #f8f8f8;
-            border-left: 3px solid #333;
+            border-left: 3px solid #111;
             font-size: 13px;
         }
 
@@ -321,7 +321,7 @@
 
         .modal-content {
             background: white;
-            border: 1px solid #333;
+            border: 1px solid #111;
             padding: 20px;
             max-width: 400px;
             width: 90%;
@@ -367,9 +367,9 @@
         }
 
         .modal-btn.primary {
-            background: black;
+            background: #111;
             color: white;
-            border-color: black;
+            border-color: #111;
         }
 
         .modal-btn:hover {
@@ -399,11 +399,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>URL Notes</h1>
-            <p>Professional markdown editing with URL storage - type with shortcuts like **bold**</p>
+            <h1>urlnote.app</h1>
+            <p>easily share notes with a url</p>
         </div>
 
         <div class="content">
+            <div class="editor-container">
+                <div id="noteText" class="note-area"></div>
+            </div>
+
             <div class="controls">
                 <button id="passwordToggle" class="btn">Password</button>
                 <div id="passwordGroup" class="password-group">
@@ -417,10 +421,6 @@
                 </div>
             </div>
 
-            <div class="editor-container">
-                <div id="noteText" class="note-area"></div>
-            </div>
-
             <div class="url-section">
                 <label class="url-label">Shareable URL:</label>
                 <div id="urlDisplay" class="url-display">
@@ -431,7 +431,7 @@
             </div>
 
             <div class="tip">
-                <strong>Shortcuts:</strong> **bold**, *italic*, # headers, > quotes, `code`, ``` code blocks, - lists. Your note is compressed and stored in the URL - no servers involved!
+                <strong>Shortcuts:</strong> **bold**, *italic*, # headers, > quotes, `code`, - lists • <strong>Privacy:</strong> Notes stored in URL only
             </div>
         </div>
     </div>
@@ -494,17 +494,7 @@
                 extensions: [
                     StarterKit,
                     Placeholder.configure({
-                        placeholder: `Start typing your note here...
-
-Use markdown shortcuts:
-• **bold** and *italic* text
-• # Headers (H1-H6)
-• > Block quotes
-• \`inline code\` and \`\`\` code blocks
-• - Lists and 1. numbered lists
-• [links](url) and --- horizontal rules
-
-Your note is automatically saved in the URL!`
+                        placeholder: `Type your note (markdown supported)`
                     })
                 ],
                 content: '',
