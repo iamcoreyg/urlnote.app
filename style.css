@@ -244,8 +244,17 @@ body {
     padding: 10px;
     font-family: 'Monaco', 'Menlo', monospace;
     font-size: 12px;
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     margin-bottom: 10px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.url-display:focus {
+    outline: 2px solid #333;
+    outline-offset: -1px;
 }
 
 .copy-btn {

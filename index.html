@@ -55,9 +55,12 @@
 
             <div class="url-section">
                 <label class="url-label">Shareable URL:</label>
-                <div id="urlDisplay" class="url-display">
-                    Start typing to generate your shareable URL...
-                </div>
+                <input
+                    id="urlDisplay"
+                    class="url-display"
+                    readonly
+                    value="Start typing to generate your shareable URL..."
+                />
                 <button id="copyBtn" class="copy-btn">Copy URL</button>
                 <div id="status" class="status"></div>
             </div>

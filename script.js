@@ -432,7 +432,7 @@ async function updateUrl() {
 
 function updateUrlDisplay() {
     const currentUrl = window.location.href;
-    urlDisplay.textContent = currentUrl;
+    urlDisplay.value = currentUrl;
 }
 
 async function copyToClipboard() {
@@ -501,6 +501,11 @@ const debouncedUpdateUrl = debounce(updateUrl, 300);
 
 // Event listeners
 copyBtn.addEventListener('click', copyToClipboard);
+
+// Add select-all functionality to URL input
+urlDisplay.addEventListener('click', () => {
+    urlDisplay.select();
+});
 
 passwordToggle.addEventListener('click', () => {
     isPasswordEnabled = !isPasswordEnabled;
