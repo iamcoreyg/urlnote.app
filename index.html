@@ -147,7 +147,6 @@
             font-size: 1.8em;
             font-weight: 600;
             margin: 1em 0 0.5em 0;
-            border-bottom: 1px solid #eee;
             padding-bottom: 0.3em;
         }
 
@@ -540,7 +539,14 @@
                             text += '###### ' + node.textContent + '\n\n';
                             break;
                         case 'p':
-                            text += node.textContent + '\n\n';
+                            if (node.textContent.trim() === '') {
+                                // Empty paragraph - preserve as empty line
+                                text += '\n';
+                            } else {
+                                // Process children first to handle inline formatting
+                                Array.from(node.childNodes).forEach(processNode);
+                                text += '\n\n';
+                            }
                             break;
                         case 'strong':
                         case 'b':
@@ -576,7 +582,7 @@
                             text += '\n';
                             break;
                         case 'br':
-                            text += '\n';
+                            text += '  \n'; // Two spaces + newline for markdown line break
                             break;
                         case 'hr':
                             text += '---\n\n';
@@ -593,8 +599,75 @@
 
             Array.from(temp.childNodes).forEach(processNode);
 
-            // Clean up extra newlines
-            return text.replace(/\n\n+/g, '\n\n').trim();
+            // Clean up extra newlines but preserve intentional line breaks
+            return text.replace(/\n\n\n+/g, '\n\n').trim();
+        }
+
+        // Helper function to convert markdown text back to HTML
+        function markdownToHtml(markdown) {
+            let html = '';
+            const lines = markdown.split('\n');
+            let i = 0;
+
+            while (i < lines.length) {
+                const line = lines[i];
+
+                if (line.startsWith('# ')) {
+                    const level = line.match(/^#+/)[0].length;
+                    html += `<h${level}>${line.slice(level + 1)}</h${level}>`;
+                    i++;
+                } else if (line.startsWith('> ')) {
+                    html += `<blockquote>${line.slice(2)}</blockquote>`;
+                    i++;
+                } else if (line.startsWith('- ')) {
+                    html += '<ul>';
+                    while (i < lines.length && lines[i].startsWith('- ')) {
+                        html += `<li>${lines[i].slice(2)}</li>`;
+                        i++;
+                    }
+                    html += '</ul>';
+                } else if (line.match(/^\d+\. /)) {
+                    html += '<ol>';
+                    while (i < lines.length && lines[i].match(/^\d+\. /)) {
+                        html += `<li>${lines[i].replace(/^\d+\. /, '')}</li>`;
+                        i++;
+                    }
+                    html += '</ol>';
+                } else if (line.startsWith('```')) {
+                    html += '<pre><code>';
+                    i++;
+                    while (i < lines.length && !lines[i].startsWith('```')) {
+                        html += lines[i] + '\n';
+                        i++;
+                    }
+                    html += '</code></pre>';
+                    i++; // Skip closing ```
+                } else if (line.trim() === '') {
+                    // Preserve empty lines as empty paragraphs for spacing
+                    html += '<p></p>';
+                    i++;
+                } else {
+                    // Regular paragraph - process inline formatting and line breaks
+                    let paragraphContent = line;
+
+                    // Handle markdown line breaks (two spaces at end of line)
+                    if (paragraphContent.endsWith('  ')) {
+                        paragraphContent = paragraphContent.slice(0, -2) + '<br>';
+                    }
+
+                    // Handle inline formatting
+                    paragraphContent = paragraphContent
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/`([^`]+)`/g, '<code>$1</code>')
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+                    html += `<p>${paragraphContent}</p>`;
+                    i++;
+                }
+            }
+
+            return html || '<p></p>';
         }
 
         // Crypto functions
@@ -735,28 +808,10 @@
                         return;
                     }
 
-                    // Set content in editor
+                    // Set content in editor using improved markdown conversion
                     if (editor) {
-                        // Parse markdown-style content to HTML for Tiptap
-                        const lines = decodedNote.split('\n');
-                        let html = '';
-
-                        lines.forEach(line => {
-                            if (line.startsWith('# ')) {
-                                const level = line.match(/^#+/)[0].length;
-                                html += `<h${level}>${line.slice(level + 1)}</h${level}>`;
-                            } else if (line.trim() === '') {
-                                // Skip empty lines
-                            } else {
-                                html += `<p>${line}</p>`;
-                            }
-                        });
-
-                        if (html) {
-                            editor.commands.setContent(html);
-                        } else {
-                            editor.commands.setContent(decodedNote);
-                        }
+                        const html = markdownToHtml(decodedNote);
+                        editor.commands.setContent(html);
                     }
 
                     updateUrlDisplay();
@@ -835,26 +890,8 @@
                 const decryptedNote = await decryptNote(currentEncryptedData, password);
 
                 if (editor) {
-                    // Parse markdown-style content
-                    const lines = decryptedNote.split('\n');
-                    let html = '';
-
-                    lines.forEach(line => {
-                        if (line.startsWith('# ')) {
-                            const level = line.match(/^#+/)[0].length;
-                            html += `<h${level}>${line.slice(level + 1)}</h${level}>`;
-                        } else if (line.trim() === '') {
-                            // Skip empty lines
-                        } else {
-                            html += `<p>${line}</p>`;
-                        }
-                    });
-
-                    if (html) {
-                        editor.commands.setContent(html);
-                    } else {
-                        editor.commands.setContent(decryptedNote);
-                    }
+                    const html = markdownToHtml(decryptedNote);
+                    editor.commands.setContent(html);
                 }
 
                 updateUrlDisplay();
