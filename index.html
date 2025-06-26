@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Notes</title>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .password-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .password-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .password-input-group {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .password-input-group.show {
+            display: block;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .note-area {
+            width: 100%;
+            min-height: 300px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .note-area:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .note-area.encrypted {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+
+        .url-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .url-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .url-display {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            opacity: 1;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            opacity: 1;
+        }
+
+        .tip {
+            margin-top: 25px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .tip strong {
+            color: #1976d2;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #6c757d;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .encryption-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .encryption-status.encrypted {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 URL Notes</h1>
+            <p>Type your note below - it's automatically saved in the URL for easy sharing!</p>
+        </div>
+
+        <div class="content">
+            <div class="password-section">
+                <div class="password-toggle">
+                    <button id="passwordToggle" class="toggle-btn">🔒 Password Protect</button>
+                    <div class="encryption-status" id="encryptionStatus">
+                        <span>🔓 Not encrypted</span>
+                    </div>
+                </div>
+                <div id="passwordInputGroup" class="password-input-group">
+                    <input
+                        type="password"
+                        id="passwordInput"
+                        class="password-input"
+                        placeholder="Enter password to encrypt your note..."
+                    />
+                </div>
+            </div>
+
+            <textarea
+                id="noteText"
+                class="note-area"
+                placeholder="Start typing your note here... It will automatically be saved in the URL so you can share it with anyone!"
+            ></textarea>
+
+            <div class="url-section">
+                <label class="url-label">Shareable URL:</label>
+                <div id="urlDisplay" class="url-display">
+                    Start typing to generate your shareable URL...
+                </div>
+                <button id="copyBtn" class="copy-btn">📋 Copy URL</button>
+                <div id="status" class="status"></div>
+            </div>
+
+            <div class="tip">
+                <strong>💡 Tip:</strong> Your note is compressed and stored entirely in the URL - no servers involved! With password protection, your note is encrypted before being stored in the URL for extra security. 🔐
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>🔒 Password Required</h3>
+            <p>This note is password protected. Please enter the password to view it:</p>
+            <input type="password" id="modalPasswordInput" class="modal-input" placeholder="Enter password...">
+            <div class="modal-buttons">
+                <button id="modalUnlockBtn" class="modal-btn primary">🔓 Unlock</button>
+                <button id="modalCancelBtn" class="modal-btn secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const noteText = document.getElementById('noteText');
+        const urlDisplay = document.getElementById('urlDisplay');
+        const copyBtn = document.getElementById('copyBtn');
+        const status = document.getElementById('status');
+        const passwordToggle = document.getElementById('passwordToggle');
+        const passwordInputGroup = document.getElementById('passwordInputGroup');
+        const passwordInput = document.getElementById('passwordInput');
+        const encryptionStatus = document.getElementById('encryptionStatus');
+        const passwordModal = document.getElementById('passwordModal');
+        const modalPasswordInput = document.getElementById('modalPasswordInput');
+        const modalUnlockBtn = document.getElementById('modalUnlockBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+        let isPasswordEnabled = false;
+        let currentEncryptedData = null;
+
+        // Enhanced compression with encryption prefix
+        const ENCRYPTED_PREFIX = 'ENC:';
+
+        // Crypto functions
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptNote(note, password) {
+            if (!password) return note;
+
+            try {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(note);
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+
+                const key = await deriveKey(password, salt);
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    data
+                );
+
+                // Combine salt + iv + encrypted data
+                const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+                combined.set(salt, 0);
+                combined.set(iv, salt.length);
+                combined.set(new Uint8Array(encrypted), salt.length + iv.length);
+
+                // Convert to base64 and add prefix
+                const base64 = btoa(String.fromCharCode(...combined));
+                return ENCRYPTED_PREFIX + base64;
+            } catch (error) {
+                console.error('Encryption error:', error);
+                throw new Error('Failed to encrypt note');
+            }
+        }
+
+        async function decryptNote(encryptedNote, password) {
+            if (!encryptedNote.startsWith(ENCRYPTED_PREFIX)) {
+                return encryptedNote; // Not encrypted
+            }
+
+            try {
+                const base64Data = encryptedNote.substring(ENCRYPTED_PREFIX.length);
+                const combined = new Uint8Array(atob(base64Data).split('').map(c => c.charCodeAt(0)));
+
+                const salt = combined.slice(0, 16);
+                const iv = combined.slice(16, 28);
+                const encrypted = combined.slice(28);
+
+                const key = await deriveKey(password, salt);
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    encrypted
+                );
+
+                const decoder = new TextDecoder();
+                return decoder.decode(decrypted);
+            } catch (error) {
+                console.error('Decryption error:', error);
+                throw new Error('Failed to decrypt note - incorrect password?');
+            }
+        }
+
+        function isEncrypted(data) {
+            return data && data.startsWith(ENCRYPTED_PREFIX);
+        }
+
+        // Enhanced encode/decode functions
+        async function encodeNote(note) {
+            try {
+                let processedNote = note;
+
+                if (isPasswordEnabled && passwordInput.value) {
+                    processedNote = await encryptNote(note, passwordInput.value);
+                }
+
+                return LZString.compressToEncodedURIComponent(processedNote);
+            } catch (error) {
+                showStatus('❌ Encryption failed: ' + error.message, 'error');
+                return LZString.compressToEncodedURIComponent(note);
+            }
+        }
+
+        async function decodeNote(encodedNote, password = null) {
+            try {
+                const decompressed = LZString.decompressFromEncodedURIComponent(encodedNote);
+
+                if (isEncrypted(decompressed)) {
+                    if (!password) {
+                        currentEncryptedData = decompressed;
+                        return null; // Will trigger password modal
+                    }
+                    return await decryptNote(decompressed, password);
+                }
+
+                return decompressed;
+            } catch (error) {
+                console.error('Error decoding note:', error);
+                throw error;
+            }
+        }
+
+        // UI update functions
+        function updateEncryptionStatus() {
+            const status = encryptionStatus;
+            if (isPasswordEnabled && passwordInput.value) {
+                status.innerHTML = '<span>🔐 Encrypted</span>';
+                status.classList.add('encrypted');
+                noteText.classList.add('encrypted');
+            } else {
+                status.innerHTML = '<span>🔓 Not encrypted</span>';
+                status.classList.remove('encrypted');
+                noteText.classList.remove('encrypted');
+            }
+        }
+
+        // Load note from URL on page load
+        async function loadNoteFromUrl() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try {
+                    const decodedNote = await decodeNote(hash);
+                    if (decodedNote === null) {
+                        // Encrypted content, show modal
+                        showPasswordModal();
+                        return;
+                    }
+                    noteText.value = decodedNote;
+                    updateUrlDisplay();
+                } catch (e) {
+                    console.error('Error decoding note from URL:', e);
+                    showStatus('❌ Error loading note from URL', 'error');
+                }
+            }
+        }
+
+        // Update URL and display
+        async function updateUrl() {
+            const note = noteText.value;
+            if (note.trim()) {
+                const encodedNote = await encodeNote(note);
+                window.history.replaceState(null, null, `#${encodedNote}`);
+            } else {
+                window.history.replaceState(null, null, window.location.pathname);
+            }
+            updateUrlDisplay();
+        }
+
+        // Update the URL display
+        function updateUrlDisplay() {
+            const currentUrl = window.location.href;
+            urlDisplay.textContent = currentUrl;
+        }
+
+        // Copy URL to clipboard
+        async function copyToClipboard() {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                showStatus('URL copied to clipboard! 🎉', 'success');
+            } catch (err) {
+                // Fallback for browsers that don't support clipboard API
+                const textArea = document.createElement('textarea');
+                textArea.value = window.location.href;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('URL copied to clipboard! 🎉', 'success');
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            setTimeout(() => {
+                status.style.opacity = '0';
+                setTimeout(() => {
+                    status.className = 'status';
+                }, 300);
+            }, 3000);
+        }
+
+        // Password modal functions
+        function showPasswordModal() {
+            passwordModal.classList.add('show');
+            modalPasswordInput.focus();
+        }
+
+        function hidePasswordModal() {
+            passwordModal.classList.remove('show');
+            modalPasswordInput.value = '';
+        }
+
+        async function unlockWithPassword() {
+            const password = modalPasswordInput.value;
+            if (!password) {
+                showStatus('❌ Please enter a password', 'error');
+                return;
+            }
+
+            try {
+                const decryptedNote = await decryptNote(currentEncryptedData, password);
+                noteText.value = decryptedNote;
+                updateUrlDisplay();
+                hidePasswordModal();
+                showStatus('🔓 Note unlocked successfully!', 'success');
+            } catch (error) {
+                showStatus('❌ Incorrect password', 'error');
+                modalPasswordInput.value = '';
+                modalPasswordInput.focus();
+            }
+        }
+
+        // Event listeners
+        noteText.addEventListener('input', updateUrl);
+        copyBtn.addEventListener('click', copyToClipboard);
+
+        passwordToggle.addEventListener('click', () => {
+            isPasswordEnabled = !isPasswordEnabled;
+            passwordToggle.classList.toggle('active', isPasswordEnabled);
+            passwordInputGroup.classList.toggle('show', isPasswordEnabled);
+
+            if (isPasswordEnabled) {
+                passwordInput.focus();
+            } else {
+                passwordInput.value = '';
+            }
+
+            updateEncryptionStatus();
+            updateUrl(); // Re-encode with new encryption setting
+        });
+
+        passwordInput.addEventListener('input', () => {
+            updateEncryptionStatus();
+            updateUrl(); // Re-encode when password changes
+        });
+
+        // Modal event listeners
+        modalUnlockBtn.addEventListener('click', unlockWithPassword);
+        modalCancelBtn.addEventListener('click', hidePasswordModal);
+
+        modalPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                unlockWithPassword();
+            }
+        });
+
+        // Close modal on outside click
+        passwordModal.addEventListener('click', (e) => {
+            if (e.target === passwordModal) {
+                hidePasswordModal();
+            }
+        });
+
+        // Load note on page load
+        loadNoteFromUrl();
+        updateUrlDisplay();
+        updateEncryptionStatus();
+    </script>
+</body>
+</html>
